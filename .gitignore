@@ -1,0 +1,10 @@
+.references/
+# saved models
+*.h5
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
