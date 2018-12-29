@@ -7,9 +7,10 @@ from matplotlib import pyplot as plt
 # https://github.com/anujgupta82/Musings
 # https://matplotlib.org/gallery/images_contours_and_fields/image_annotated_heatmap.html
 
-# for the dynamic matplotlib figure updates to work one needs to cast
+# one needs to cast
 # %matplotlib notebook
-# magic in the notebook before plotting the figure
+# magic in the notebook before plotting the figure to make the dynamic figure
+# updates work
 
 class Display:
 
@@ -37,7 +38,7 @@ class Display:
         self.ax = ax
 
         # text color change threshold (show light text on dark background and
-        # vice versa
+        # vice versa)
         self.text_threshold = text_threshold
 
         self.text_kw = {'horizontalalignment': 'center',
