@@ -12,6 +12,7 @@ from matplotlib import pyplot as plt
 # magic in the notebook before plotting the figure to make the dynamic figure
 # updates work
 
+
 class Display:
 
     def __init__(self, state_size=(4, 4), display_size=(8, 8),
