@@ -7,17 +7,17 @@ from matplotlib import pyplot as plt
 # https://github.com/anujgupta82/Musings
 # https://matplotlib.org/gallery/images_contours_and_fields/image_annotated_heatmap.html
 
-# one needs to cast
-# %matplotlib notebook
-# magic in the notebook before plotting the figure to make the dynamic figure
-# updates work
+# to make the dynamic figure updates work one needs to cast
+# "%matplotlib notebook" magic in the notebook before plotting the figure
 
 
+# visualize the game state (2048 board with numbered tiles) in jupyter notebook
 class Display:
 
     def __init__(self, state_size=(4, 4), display_size=(8, 8),
                  colormap="magma_r", background_color="grey",
                  textcolors=("black", "white"), text_threshold=None):
+        # copy to not modify the library colormap
         self.cmap = copy(plt.cm.get_cmap(colormap))
         self.cmap.set_bad(background_color)
 
@@ -38,8 +38,8 @@ class Display:
 
         self.ax = ax
 
-        # text color change threshold (show light text on dark background and
-        # vice versa)
+        # text color change threshold (to show light text on dark background
+        # and vice versa)
         self.text_threshold = text_threshold
 
         self.text_kw = {'horizontalalignment': 'center',
@@ -52,13 +52,14 @@ class Display:
 
     def draw(self, state):
         # value 0 is masked in state so it is shown in background color on the
-        # plot (because of call to colormap set_bad() method in init)
+        # plot (this is set by the call to colormap method set_bad() in init)
         self.ax.imshow(np.ma.masked_equal(state, 0), cmap=self.cmap,
                        vmin=0, vmax=16)
         self.annotate(state)
         self.fig.canvas.draw()
 
     def annotate(self, state):
+        # draw numbers (powers of 2) on the board tiles
         for text in self.texts:
             text.remove()
         self.texts.clear()
@@ -79,7 +80,6 @@ class Display:
 
 def test():
     import time
-
     display = Display(text_threshold=10)
     for i in range(4):
         time.sleep(2)
