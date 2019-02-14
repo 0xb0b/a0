@@ -26,9 +26,9 @@ class Display:
         # remove frame and ticks
         ax.set_frame_on(False)
         ax.tick_params(axis="both", which="both",
-                bottom=False, top=False, left=False, right=False,
-                labelbottom=False, labeltop=False,
-                labelleft=False, labelright=False)
+                       bottom=False, top=False, left=False, right=False,
+                       labelbottom=False, labeltop=False,
+                       labelleft=False, labelright=False)
 
         # set up the grid
         ax.set_xticks(np.arange(state_size[1]+1)-.5, minor=True)
@@ -85,4 +85,3 @@ def test():
         time.sleep(2)
         state = np.random.randint(17, size=(4, 4), dtype=int)
         display.draw(state)
-
