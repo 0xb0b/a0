@@ -1,15 +1,23 @@
+import random
+
 
 UP, DOWN, LEFT, RIGHT = range(4)
+
+
+def increment(tile):
+    return tile + 1
 
 
 class Game:
 
     action_space = (UP, DOWN, LEFT, RIGHT)
-    empty_cell = 0
+    empty_tile = 0
 
-    def __init__(self, size=4):
+    def __init__(self, rseed=42, size=4, four_probability=0.1):
+        random.seed(rseed)
         self.size = size
-        self.state = [self.empty_cell] * size * size
+        self.four_p = four_probability
+        self.state = [self.empty_tile] * size * size
         self.history = []
         self.indices = {}
         rows = [tuple([i * size + j for j in range(size)])
@@ -20,23 +28,67 @@ class Game:
         self.indices[DOWN] = tuple([tuple(reversed(col)) for col in columns])
         self.indices[LEFT] = tuple(rows)
         self.indices[RIGHT] = tuple([tuple(reversed(row)) for row in rows])
+        self.score = 0
 
-    def interact(self, action):
+    def move(self, action):
+        self.interact(action, self.state)
+        self.update_score()
+        self.generate_tile(self.state)
+        self.history.append(self.state)
+
+    def interact(self, action, state):
         # change the state according to the action
+        # slide the tiles as far as they will go in a direction defined by
+        # action
+        # tiles do not merge recursively, if a pair is merged in a move then the
+        # resulting tile can not be merged further in the same move:
+        # 4   0   2-> 2
+        # 4-> 0   0   4
+        # 0   0   4   4
         for sequence_indices in self.indices[action]:
-            stop_index = sequence_indices[0]
-            for i in sequence_indices[1:]:
-                cell = self.state[i]
-                if cell == self.empty_cell:
+            stop_i = 0
+            stop_index = sequence_indices[stop_i]
+            for index in sequence_indices[1:]:
+                if self.empty(index, state):
                     continue
-                self.state[i] = self.empty_cell
-                if self.state[stop_index] == self.empty_cell:
-                    self.state[stop_index] = cell
-                elif self.state[stop_index] == cell:
-                    self.state[stop_index] += 1
+                tile = state[index]
+                self.clear_tile(index, state)
+                if self.empty(stop_index, state):
+                    state[stop_index] = tile
+                elif state[stop_index] == tile:
+                    state[stop_index] = increment(tile)
+                    stop_i += 1
+                    stop_index = sequence_indices[stop_i]
                 else:
-                    stop_index += 1
-                    self.state[stop_index] = cell
+                    stop_i += 1
+                    stop_index = sequence_indices[stop_i]
+                    state[stop_index] = tile
+
+    def empty(self, index, state):
+        return state[index] == self.empty_tile
+
+    def clear_tile(self, index, state):
+        state[index] = self.empty_tile
+
+    def update_score(self):
+        min_tile = increment(self.empty_tile)
+        prev_tiles = [tile for tile in self.history[-1] if tile > min_tile]
+        current_tiles = [tile for tile in self.state if tile > min_tile]
+        for tile in current_tiles:
+            if tile in prev_tiles:
+                prev_tiles.remove(tile)
+            else:
+                self.score += tile
+
+    def generate_tile(self, state):
+        # insert tile at random empty position
+        # probabilities of the values of the new tile: {2: 1 - p, 4: p}
+        tile = 1
+        if random.random() > self.four_p:
+            tile = increment(tile)
+        empty_index = random.choice([i for i in range(len(state))
+                                     if self.empty(i, state)])
+        state[empty_index] = tile
 
     def observe(self):
         # return information about the state
@@ -45,8 +97,33 @@ class Game:
 
     def evaluate(self):
         # return the value of the state (e.g. game score)
-        return 0
+        return self.score
+
+    def is_state_changed(self, action):
+        for sequence_indices in self.indices[action]:
+            stop_i = 0
+            stop_index = sequence_indices[stop_i]
+            for index in sequence_indices[1:]:
+                if self.empty(index, self.state):
+                    continue
+                tile = self.state[index]
+                if (self.empty(stop_index, self.state) or
+                        self.state[stop_index] == tile or
+                        sequence_indices[stop_i + 1] != index):
+                    return True
+                else:
+                    stop_i += 1
+                    stop_index = sequence_indices[stop_i]
+        return False
+
+    def get_possible_actions(self):
+        return [action for action in self.action_space
+                if self.is_state_changed(action)]
 
     def is_terminal_state(self):
-        # is any further interaction possible (e.g. is the game finished?)
-        return True
+        # if any further interaction is possible (e.g. is the game finished?)
+        for action in self.action_space:
+            if self.is_state_changed(action):
+                return False
+        else:
+            return True
