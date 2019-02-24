@@ -1,7 +1,5 @@
 import random
-
-
-UP, DOWN, LEFT, RIGHT = range(4)
+from enum import Enum
 
 
 def increment(tile):
@@ -10,7 +8,10 @@ def increment(tile):
 
 class Game:
 
-    action_space = (UP, DOWN, LEFT, RIGHT)
+    # action space:
+    #   actions enumerated starting from RIGHT and rotating counter clockwise
+    action = Enum("action", "RIGHT, UP, LEFT, DOWN")
+
     empty_tile = 0
 
     def __init__(self, rseed=42, size=4, four_probability=0.1):
@@ -18,17 +19,24 @@ class Game:
         self.size = size
         self.four_p = four_probability
         self.state = [self.empty_tile] * size * size
+        # make initial state nonempty so game state can never be empty
+        self.generate_tile(self.state)
         self.history = []
         self.indices = {}
         rows = [tuple([i * size + j for j in range(size)])
                 for i in range(size)]
         columns = [tuple([i + j * size for j in range(size)])
                    for i in range(size)]
-        self.indices[UP] = tuple(columns)
-        self.indices[DOWN] = tuple([tuple(reversed(col)) for col in columns])
-        self.indices[LEFT] = tuple(rows)
-        self.indices[RIGHT] = tuple([tuple(reversed(row)) for row in rows])
+        self.indices[self.action.UP] = tuple(columns)
+        self.indices[self.action.DOWN] = tuple(
+            [tuple(reversed(col)) for col in columns])
+        self.indices[self.action.LEFT] = tuple(rows)
+        self.indices[self.action.RIGHT] = tuple(
+            [tuple(reversed(row)) for row in rows])
         self.score = 0
+
+    def actions(self):
+        return iter(self.action)
 
     def move(self, action):
         self.interact(action, self.state)
@@ -37,14 +45,15 @@ class Game:
         self.history.append(self.state)
 
     def interact(self, action, state):
-        # change the state according to the action
+        # change the state according to the action.
+        # modifies state in place.
         # slide the tiles as far as they will go in a direction defined by
-        # action
+        # action.
         # tiles do not merge recursively, if a pair is merged in a move then the
         # resulting tile can not be merged further in the same move:
         # 4   0   2-> 2
-        # 4-> 0   0   4
-        # 0   0   4   4
+        #   4-> 0   0   4
+        #     0   0   4   4
         for sequence_indices in self.indices[action]:
             stop_i = 0
             stop_index = sequence_indices[stop_i]
@@ -82,8 +91,8 @@ class Game:
 
     def generate_tile(self, state):
         # insert tile at random empty position
-        # probabilities of the values of the new tile: {2: 1 - p, 4: p}
-        tile = 1
+        # probabilities of the values of the new tile: {2: (1 - p), 4: p}
+        tile = increment(self.empty_tile)
         if random.random() > self.four_p:
             tile = increment(tile)
         empty_index = random.choice([i for i in range(len(state))
@@ -99,16 +108,16 @@ class Game:
         # return the value of the state (e.g. game score)
         return self.score
 
-    def is_state_changed(self, action):
+    def is_state_changed(self, action, state):
         for sequence_indices in self.indices[action]:
             stop_i = 0
             stop_index = sequence_indices[stop_i]
             for index in sequence_indices[1:]:
-                if self.empty(index, self.state):
+                if self.empty(index, state):
                     continue
-                tile = self.state[index]
-                if (self.empty(stop_index, self.state) or
-                        self.state[stop_index] == tile or
+                tile = state[index]
+                if (self.empty(stop_index, state) or
+                        state[stop_index] == tile or
                         sequence_indices[stop_i + 1] != index):
                     return True
                 else:
@@ -116,14 +125,15 @@ class Game:
                     stop_index = sequence_indices[stop_i]
         return False
 
-    def get_possible_actions(self):
-        return [action for action in self.action_space
-                if self.is_state_changed(action)]
+    def get_possible_actions(self, state):
+        return [action for action in self.action
+                if self.is_state_changed(action, state)]
 
-    def is_terminal_state(self):
+    def is_terminal(self, state):
         # if any further interaction is possible (e.g. is the game finished?)
-        for action in self.action_space:
-            if self.is_state_changed(action):
+        # state must be nonempty
+        for action in self.action:
+            if self.is_state_changed(action, state):
                 return False
         else:
             return True

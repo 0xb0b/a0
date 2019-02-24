@@ -85,3 +85,4 @@ def test():
         time.sleep(2)
         state = np.random.randint(17, size=(4, 4), dtype=int)
         display.draw(state)
+
