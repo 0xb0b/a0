@@ -102,14 +102,14 @@ possible_actions_state_examples = [
     # actions are enumerated as integers: RIGHT: 0, UP: 1, LEFT: 2, DOWN: 3
 
     # empty state, no actions possible
-    ((0,) * 16, ()),
+    ([0] * 16, ()),
 
     # non empty state, all actions possible
     # 0 1 2 0
     # 0 4 0 0
     # 5 2 1 0
     # 6 0 3 0
-    ((0, 1, 2, 0, 0, 4, 0, 0, 5, 2, 1, 0, 6, 0, 3, 0),
+    ([0, 1, 2, 0, 0, 4, 0, 0, 5, 2, 1, 0, 6, 0, 3, 0],
      ("RIGHT", "UP", "LEFT", "DOWN")),
 
     # all actions except RIGHT possible
@@ -117,35 +117,35 @@ possible_actions_state_examples = [
     # 0 0 0 4
     # 5 2 1 6
     # 0 0 0 0
-    ((0, 1, 2, 3, 0, 0, 0, 4, 5, 2, 1, 6, 0, 0, 0, 0), ("UP", "LEFT", "DOWN")),
+    ([0, 1, 2, 3, 0, 0, 0, 4, 5, 2, 1, 6, 0, 0, 0, 0], ("UP", "LEFT", "DOWN")),
 
     # only actions LEFT and DOWN possible
     # 0 1 2 1
     # 0 3 1 4
     # 0 0 2 5
     # 0 0 0 0
-    ((0, 1, 2, 1, 0, 3, 1, 4, 0, 0, 2, 5, 0, 0, 0, 0), ("LEFT", "DOWN")),
+    ([0, 1, 2, 1, 0, 3, 1, 4, 0, 0, 2, 5, 0, 0, 0, 0], ("LEFT", "DOWN")),
 
     # only actions LEFT and RIGHT possible
     # 0 1 0 3
     # 0 3 0 1
     # 0 2 0 2
     # 0 5 0 4
-    ((0, 1, 0, 3, 0, 3, 0, 1, 0, 2, 0, 2, 0, 5, 0, 4), ("RIGHT", "LEFT")),
+    ([0, 1, 0, 3, 0, 3, 0, 1, 0, 2, 0, 2, 0, 5, 0, 4], ("RIGHT", "LEFT")),
 
     # only action UP possible
     # 0 0 0 0
     # 0 0 0 0
     # 6 2 1 3
     # 3 1 2 7
-    ((0, 0, 0, 0, 0, 0, 0, 0, 6, 2, 1, 3, 3, 1, 2, 7), ("UP",)),
+    ([0, 0, 0, 0, 0, 0, 0, 0, 6, 2, 1, 3, 3, 1, 2, 7], ("UP",)),
 
     # terminal state
     # 3 1 2 3
     # 1 2 8 4
     # 5 3 1 6
     # 1 2 3 5
-    ((3, 1, 2, 3, 1, 2, 8, 4, 5, 3, 1, 6, 1, 2, 3, 5), ())
+    ([3, 1, 2, 3, 1, 2, 8, 4, 5, 3, 1, 6, 1, 2, 3, 5], ())
 ]
 
 
@@ -154,3 +154,80 @@ possible_actions_state_examples = [
 def test_get_possible_actions(game_instance, state, possible_actions):
     assert game_instance.get_possible_actions(state) == [
         game_instance.action[name] for name in possible_actions]
+
+
+def test_is_terminal(game_instance):
+    assert not game_instance.is_terminal([0, 1, 2, 0,
+                                          0, 4, 0, 0,
+                                          5, 2, 1, 0,
+                                          6, 0, 3, 0])
+    assert game_instance.is_terminal([3, 1, 2, 3,
+                                      1, 2, 8, 4,
+                                      5, 3, 1, 6,
+                                      1, 2, 3, 5])
+
+
+def test_generate_tile(game_instance):
+    num_tiles = 16
+    state = [0] * num_tiles
+    for _ in range(num_tiles):
+        game_instance.generate_tile(state)
+    for tile in state:
+        assert tile == 1 or tile == 2
+    old_state = state[:]
+    game_instance.generate_tile(state)
+    assert state == old_state
+
+
+update_score_state_examples = [
+    # (state, score)
+
+    # tiles do not move, score does not change
+    # 0 1 2 3     0 1 2 3
+    # 0 0 0 4 --> 0 0 0 4
+    # 5 2 1 6     5 2 1 6
+    # 0 0 0 0     0 0 0 0
+    ([0, 1, 2, 3, 0, 0, 0, 4, 5, 2, 1, 6, 0, 0, 0, 0], 0),
+
+    # terminal state, score does not change
+    # 3 1 2 3     3 1 2 3
+    # 1 2 8 4 --> 1 2 8 4
+    # 5 3 1 6     5 3 1 6
+    # 1 2 3 5     1 2 3 5
+    ([3, 1, 2, 3, 1, 2, 8, 4, 5, 3, 1, 6, 1, 2, 3, 5], 0),
+
+    # tiles moved, no merging, score does not change
+    # 0 1 2 0     0 0 1 2
+    # 0 4 0 0 --> 0 0 0 4
+    # 5 2 1 0     0 5 2 1
+    # 6 0 3 0     0 0 6 3
+    ([0, 1, 2, 0, 0, 4, 0, 0, 5, 2, 1, 0, 6, 0, 3, 0], 0),
+
+    # tiles moved and merged
+    # 0 0 0 0     0 0 0 0
+    # 0 1 0 1 --> 0 0 0 2
+    # 0 0 0 0     0 0 0 0
+    # 0 0 0 0     0 0 0 0
+    ([0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0], 2),
+
+    # tiles moved and merged
+    # 0 1 2 2     0 0 1 3
+    # 0 4 0 4 --> 0 0 0 5
+    # 2 2 1 0     0 0 3 1
+    # 3 0 3 7     0 0 4 7
+    ([0, 1, 2, 2, 0, 4, 0, 4, 2, 2, 1, 0, 3, 0, 3, 7], 5 + 4 + 3 + 3),
+
+    # double merges
+    # 1 1 2 2     0 0 2 3
+    # 0 5 4 4 --> 0 0 5 5
+    # 2 0 2 3     0 0 3 3
+    # 3 3 3 3     0 0 4 4
+    ([1, 1, 2, 2, 0, 5, 4, 4, 2, 0, 2, 3, 3, 3, 3, 3], 5 + 4 + 4 + 3 + 3 + 2),
+]
+
+
+@pytest.mark.parametrize("state, score", update_score_state_examples)
+def test_score(game_instance, state, score):
+    game_instance.state = state
+    game_instance.move(game_instance.action.RIGHT)
+    assert game_instance.score == score

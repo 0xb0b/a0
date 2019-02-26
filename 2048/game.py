@@ -39,10 +39,10 @@ class Game:
         return iter(self.action)
 
     def move(self, action):
+        # save current state to the history
+        self.history.append(self.observe())
         self.interact(action, self.state)
         self.update_score()
-        self.generate_tile(self.state)
-        self.history.append(self.state)
 
     def interact(self, action, state):
         # change the state according to the action.
@@ -80,14 +80,26 @@ class Game:
         state[index] = self.empty_tile
 
     def update_score(self):
+        self.score += self.get_score(self.state, self.history[-1])
+
+    def get_score(self, state, prev_state):
         min_tile = increment(self.empty_tile)
-        prev_tiles = [tile for tile in self.history[-1] if tile > min_tile]
-        current_tiles = [tile for tile in self.state if tile > min_tile]
-        for tile in current_tiles:
-            if tile in prev_tiles:
-                prev_tiles.remove(tile)
+        prev_tiles = [tile for tile in prev_state if tile > min_tile]
+        prev_tiles.sort()
+        tiles = [tile for tile in state if tile > min_tile]
+        tiles.sort(reverse=True)
+        score = 0
+        for tile in tiles:
+            if prev_tiles and tile == prev_tiles[-1]:
+                prev_tiles.pop()
             else:
-                self.score += tile
+                # this tile is from merging two lower level tiles
+                # in previous state
+                score += tile
+                if prev_tiles:
+                    prev_tiles.pop()
+                    prev_tiles.pop()
+        return score
 
     def generate_tile(self, state):
         # insert tile at random empty position
@@ -95,14 +107,14 @@ class Game:
         tile = increment(self.empty_tile)
         if random.random() > self.four_p:
             tile = increment(tile)
-        empty_index = random.choice([i for i in range(len(state))
-                                     if self.empty(i, state)])
-        state[empty_index] = tile
+        empty_indices = [i for i in range(len(state)) if self.empty(i, state)]
+        if empty_indices:
+            state[random.choice(empty_indices)] = tile
 
     def observe(self):
         # return information about the state
         # this can be the state itself or some partial information
-        return self.state
+        return self.state[:]
 
     def evaluate(self):
         # return the value of the state (e.g. game score)
