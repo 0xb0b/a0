@@ -21,7 +21,7 @@ class Game:
         self.state = [self.empty_tile] * size * size
         # make initial state nonempty so game state can never be empty
         self.generate_tile(self.state)
-        self.history = []
+        self.trajectory = []
         self.indices = {}
         rows = [tuple([i * size + j for j in range(size)])
                 for i in range(size)]
@@ -40,7 +40,7 @@ class Game:
 
     def move(self, action):
         # save current state to the history
-        self.history.append(self.observe())
+        self.trajectory.append(self.observe())
         self.interact(action, self.state)
         self.update_score()
 
@@ -80,7 +80,7 @@ class Game:
         state[index] = self.empty_tile
 
     def update_score(self):
-        self.score += self.get_score(self.state, self.history[-1])
+        self.score += self.get_score(self.state, self.trajectory[-1])
 
     def get_score(self, state, prev_state):
         min_tile = increment(self.empty_tile)
