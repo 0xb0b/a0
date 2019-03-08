@@ -1,5 +1,5 @@
 import pytest
-from game import Game
+from two048.game import Game
 
 
 def rotate(state, size, num_rotations=1):
