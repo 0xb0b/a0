@@ -153,7 +153,7 @@ possible_actions_state_examples = [
                          possible_actions_state_examples)
 def test_get_possible_actions(game_instance, state, possible_actions):
     assert game_instance.get_possible_actions(state) == [
-        game_instance.action[name] for name in possible_actions]
+        game_instance.ActionSpace[name] for name in possible_actions]
 
 
 def test_is_terminal(game_instance):
@@ -229,5 +229,5 @@ update_score_state_examples = [
 @pytest.mark.parametrize("state, score", update_score_state_examples)
 def test_score(game_instance, state, score):
     game_instance.state = state
-    game_instance.move(game_instance.action.RIGHT)
+    game_instance.move(game_instance.ActionSpace.RIGHT)
     assert game_instance.score == score

@@ -10,7 +10,7 @@ class Game:
 
     # action space:
     #   actions enumerated starting from RIGHT and rotating counter clockwise
-    action = Enum("action", "RIGHT, UP, LEFT, DOWN")
+    ActionSpace = Enum("ActionSpace", "RIGHT, UP, LEFT, DOWN")
 
     empty_tile = 0
 
@@ -27,16 +27,16 @@ class Game:
                 for i in range(size)]
         columns = [tuple([i + j * size for j in range(size)])
                    for i in range(size)]
-        self.indices[self.action.UP] = tuple(columns)
-        self.indices[self.action.DOWN] = tuple(
+        self.indices[self.ActionSpace.UP] = tuple(columns)
+        self.indices[self.ActionSpace.DOWN] = tuple(
             [tuple(reversed(col)) for col in columns])
-        self.indices[self.action.LEFT] = tuple(rows)
-        self.indices[self.action.RIGHT] = tuple(
+        self.indices[self.ActionSpace.LEFT] = tuple(rows)
+        self.indices[self.ActionSpace.RIGHT] = tuple(
             [tuple(reversed(row)) for row in rows])
         self.score = 0
 
     def actions(self):
-        return iter(self.action)
+        return iter(self.ActionSpace)
 
     def move(self, action):
         # save current state to the history
@@ -138,13 +138,13 @@ class Game:
         return False
 
     def get_possible_actions(self, state):
-        return [action for action in self.action
+        return [action for action in self.ActionSpace
                 if self.is_state_changed(action, state)]
 
     def is_terminal(self, state):
         # if any further interaction is possible (e.g. is the game finished?)
         # state must be nonempty
-        for action in self.action:
+        for action in self.ActionSpace:
             if self.is_state_changed(action, state):
                 return False
         else:
