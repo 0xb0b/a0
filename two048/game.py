@@ -38,31 +38,31 @@ class Game:
     def actions(self):
         return iter(self.ActionSpace)
 
-    def move(self, action):
-        # save current state to the history
-        self.trajectory.append(self.observe())
-        self.interact(action, self.state)
+    def advance(self, action):
+        # save current state to the history and change state
+        self.trajectory.append(self.state[:])
+        self.change(action, self.state)
         self.update_score()
 
-    def interact(self, action, state):
-        # change the state according to the action.
+    def change(self, action, state):
+        # change the state according to the action:
+        #   slide the tiles as far as they will go in a direction defined by
+        #   action.
+        #   tiles do not merge recursively, if a pair is merged in a move then
+        #   the resulting tile can not be merged further in the same move:
+        #   4   0   2-> 2
+        #     4-> 0   0   4
+        #       0   0   4   4
         # modifies state in place.
-        # slide the tiles as far as they will go in a direction defined by
-        # action.
-        # tiles do not merge recursively, if a pair is merged in a move then the
-        # resulting tile can not be merged further in the same move:
-        # 4   0   2-> 2
-        #   4-> 0   0   4
-        #     0   0   4   4
         for sequence_indices in self.indices[action]:
             stop_i = 0
             stop_index = sequence_indices[stop_i]
             for index in sequence_indices[1:]:
-                if self.empty(index, state):
+                if self.is_tile_empty(index, state):
                     continue
                 tile = state[index]
                 self.clear_tile(index, state)
-                if self.empty(stop_index, state):
+                if self.is_tile_empty(stop_index, state):
                     state[stop_index] = tile
                 elif state[stop_index] == tile:
                     state[stop_index] = increment(tile)
@@ -73,16 +73,16 @@ class Game:
                     stop_index = sequence_indices[stop_i]
                     state[stop_index] = tile
 
-    def empty(self, index, state):
+    def is_tile_empty(self, index, state):
         return state[index] == self.empty_tile
 
     def clear_tile(self, index, state):
         state[index] = self.empty_tile
 
     def update_score(self):
-        self.score += self.get_score(self.state, self.trajectory[-1])
+        self.score += self.diff_score(self.state, self.trajectory[-1])
 
-    def get_score(self, state, prev_state):
+    def diff_score(self, state, prev_state):
         min_tile = increment(self.empty_tile)
         prev_tiles = [tile for tile in prev_state if tile > min_tile]
         prev_tiles.sort()
@@ -107,16 +107,17 @@ class Game:
         tile = increment(self.empty_tile)
         if random.random() > self.four_p:
             tile = increment(tile)
-        empty_indices = [i for i in range(len(state)) if self.empty(i, state)]
+        empty_indices = [i for i in range(len(state))
+                         if self.is_tile_empty(i, state)]
         if empty_indices:
             state[random.choice(empty_indices)] = tile
 
-    def observe(self):
+    def get_state(self):
         # return information about the state
         # this can be the state itself or some partial information
         return self.state[:]
 
-    def evaluate(self):
+    def get_value(self):
         # return the value of the state (e.g. game score)
         return self.score
 
@@ -125,10 +126,10 @@ class Game:
             stop_i = 0
             stop_index = sequence_indices[stop_i]
             for index in sequence_indices[1:]:
-                if self.empty(index, state):
+                if self.is_tile_empty(index, state):
                     continue
                 tile = state[index]
-                if (self.empty(stop_index, state) or
+                if (self.is_tile_empty(stop_index, state) or
                         state[stop_index] == tile or
                         sequence_indices[stop_i + 1] != index):
                     return True

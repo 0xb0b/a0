@@ -86,13 +86,13 @@ interact_state_examples = [
 
 
 @pytest.mark.parametrize("initial_state, final_state", interact_state_examples)
-def test_game_interact(game_instance, initial_state, final_state):
+def test_game_change(game_instance, initial_state, final_state):
     # copy example data to local mutable variables
     num_rotations = 0
     for action in game_instance.actions():
         state = rotate(initial_state, game_instance.size, num_rotations)
         expected_state = rotate(final_state, game_instance.size, num_rotations)
-        game_instance.interact(action, state)
+        game_instance.change(action, state)
         assert state == expected_state
         num_rotations += 1
 
@@ -229,5 +229,5 @@ update_score_state_examples = [
 @pytest.mark.parametrize("state, score", update_score_state_examples)
 def test_score(game_instance, state, score):
     game_instance.state = state
-    game_instance.move(game_instance.ActionSpace.RIGHT)
+    game_instance.advance(game_instance.ActionSpace.RIGHT)
     assert game_instance.score == score
