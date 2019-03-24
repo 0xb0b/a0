@@ -82,7 +82,7 @@ def test():
     import time
     display = Display(text_threshold=10)
     for i in range(4):
-        time.sleep(2)
         state = np.random.randint(17, size=(4, 4), dtype=int)
         display.draw(state)
+        time.sleep(2)
 
