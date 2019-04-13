@@ -1,5 +1,5 @@
 import pytest
-from two048.game import Game
+from game import Game
 
 
 def rotate(state, size, num_rotations=1):
@@ -86,8 +86,7 @@ interact_state_examples = [
 
 
 @pytest.mark.parametrize("initial_state, final_state", interact_state_examples)
-def test_game_change(game_instance, initial_state, final_state):
-    # copy example data to local mutable variables
+def test_change(game_instance, initial_state, final_state):
     num_rotations = 0
     for action in game_instance.actions():
         state = rotate(initial_state, game_instance.size, num_rotations)
@@ -99,7 +98,6 @@ def test_game_change(game_instance, initial_state, final_state):
 
 possible_actions_state_examples = [
     # (state, possible actions)
-    # actions are enumerated as integers: RIGHT: 0, UP: 1, LEFT: 2, DOWN: 3
 
     # empty state, no actions possible
     ([0] * 16, ()),
@@ -168,8 +166,8 @@ def test_is_terminal(game_instance):
 
 
 def test_generate_tile(game_instance):
-    num_tiles = 16
-    state = [0] * num_tiles
+    num_tiles = game_instance.size * game_instance.size
+    state = [Game.empty_tile] * num_tiles
     for _ in range(num_tiles):
         game_instance.generate_tile(state)
     for tile in state:
@@ -229,5 +227,5 @@ update_score_state_examples = [
 @pytest.mark.parametrize("state, score", update_score_state_examples)
 def test_score(game_instance, state, score):
     game_instance.state = state
-    game_instance.advance(game_instance.ActionSpace.RIGHT)
+    game_instance.accept(game_instance.ActionSpace.RIGHT)
     assert game_instance.score == score

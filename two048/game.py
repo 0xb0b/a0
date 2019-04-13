@@ -14,35 +14,39 @@ class Game:
 
     empty_tile = 0
 
-    def __init__(self, rseed=42, size=4, four_probability=0.1):
+    def __init__(self, rseed=42, size=4, probability_of_4=0.1):
         random.seed(rseed)
         self.size = size
-        self.four_p = four_probability
+        self.score = 0
+        self.p4 = probability_of_4
+
+        self.prev_state = []
         self.state = [self.empty_tile] * size * size
-        # make initial state nonempty so game state can never be empty
+        # make initial state nonempty so that game state can never be empty
         self.generate_tile(self.state)
-        self.trajectory = []
-        self.indices = {}
+
+        # sequences of indices corresponding to different moves
+        self.index_sequences = {}
         rows = [tuple([i * size + j for j in range(size)])
                 for i in range(size)]
         columns = [tuple([i + j * size for j in range(size)])
                    for i in range(size)]
-        self.indices[self.ActionSpace.UP] = tuple(columns)
-        self.indices[self.ActionSpace.DOWN] = tuple(
+        self.index_sequences[self.ActionSpace.UP] = tuple(columns)
+        self.index_sequences[self.ActionSpace.DOWN] = tuple(
             [tuple(reversed(col)) for col in columns])
-        self.indices[self.ActionSpace.LEFT] = tuple(rows)
-        self.indices[self.ActionSpace.RIGHT] = tuple(
+        self.index_sequences[self.ActionSpace.LEFT] = tuple(rows)
+        self.index_sequences[self.ActionSpace.RIGHT] = tuple(
             [tuple(reversed(row)) for row in rows])
-        self.score = 0
 
     def actions(self):
         return iter(self.ActionSpace)
 
-    def advance(self, action):
-        # save current state to the history and change state
-        self.trajectory.append(self.state[:])
+    def accept(self, action):
+        # save current state and change it
+        self.prev_state = self.state[:]
         self.change(action, self.state)
         self.update_score()
+        return self.state[:]
 
     def change(self, action, state):
         # change the state according to the action:
@@ -50,14 +54,13 @@ class Game:
         #   action.
         #   tiles do not merge recursively, if a pair is merged in a move then
         #   the resulting tile can not be merged further in the same move:
-        #   4   0   2-> 2
-        #     4-> 0   0   4
-        #       0   0   4   4
+        #   4  0  2  2  ->  4  0  0  4  ->  0   0   4   4
+        #
         # modifies state in place.
-        for sequence_indices in self.indices[action]:
+        for indices in self.index_sequences[action]:
             stop_i = 0
-            stop_index = sequence_indices[stop_i]
-            for index in sequence_indices[1:]:
+            stop_index = indices[stop_i]
+            for index in indices[1:]:
                 if self.is_tile_empty(index, state):
                     continue
                 tile = state[index]
@@ -67,10 +70,10 @@ class Game:
                 elif state[stop_index] == tile:
                     state[stop_index] = increment(tile)
                     stop_i += 1
-                    stop_index = sequence_indices[stop_i]
+                    stop_index = indices[stop_i]
                 else:
                     stop_i += 1
-                    stop_index = sequence_indices[stop_i]
+                    stop_index = indices[stop_i]
                     state[stop_index] = tile
 
     def is_tile_empty(self, index, state):
@@ -80,9 +83,10 @@ class Game:
         state[index] = self.empty_tile
 
     def update_score(self):
-        self.score += self.diff_score(self.state, self.trajectory[-1])
+        self.score += self.diff_score(self.state, self.prev_state)
 
     def diff_score(self, state, prev_state):
+        # TODO describe what the score is and how it is calculated
         min_tile = increment(self.empty_tile)
         prev_tiles = [tile for tile in prev_state if tile > min_tile]
         prev_tiles.sort()
@@ -104,17 +108,15 @@ class Game:
     def generate_tile(self, state):
         # insert tile at random empty position
         # probabilities of the values of the new tile: {2: (1 - p), 4: p}
-        tile = increment(self.empty_tile)
-        if random.random() > self.four_p:
-            tile = increment(tile)
+        tile = increment(self.empty_tile)  # tile 2
+        if random.random() > self.p4:
+            tile = increment(tile)  # tile 4
         empty_indices = [i for i in range(len(state))
                          if self.is_tile_empty(i, state)]
         if empty_indices:
             state[random.choice(empty_indices)] = tile
 
     def get_state(self):
-        # return information about the state
-        # this can be the state itself or some partial information
         return self.state[:]
 
     def get_value(self):
@@ -122,20 +124,20 @@ class Game:
         return self.score
 
     def is_state_changed(self, action, state):
-        for sequence_indices in self.indices[action]:
+        for indices in self.index_sequences[action]:
             stop_i = 0
-            stop_index = sequence_indices[stop_i]
-            for index in sequence_indices[1:]:
+            stop_index = indices[stop_i]
+            for index in indices[1:]:
                 if self.is_tile_empty(index, state):
                     continue
                 tile = state[index]
                 if (self.is_tile_empty(stop_index, state) or
                         state[stop_index] == tile or
-                        sequence_indices[stop_i + 1] != index):
+                        indices[stop_i + 1] != index):
                     return True
                 else:
                     stop_i += 1
-                    stop_index = sequence_indices[stop_i]
+                    stop_index = indices[stop_i]
         return False
 
     def get_possible_actions(self, state):
@@ -150,3 +152,4 @@ class Game:
                 return False
         else:
             return True
+
