@@ -2,7 +2,7 @@ from model import Model
 from policy import get_random_action
 
 
-class RandomAgent:
+class Agent:
 
     def __init__(self, game):
         self.action_space = [action for action in game.actions()]
