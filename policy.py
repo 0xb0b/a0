@@ -1,5 +1,7 @@
 import random
 
 
-def get_random_action(action_space):
-    return random.choice(action_space)
+class RandomPolicy:
+    def get_action(self, game, _):
+        actions = game.get_possible_actions()
+        return random.choice(actions) if actions else None

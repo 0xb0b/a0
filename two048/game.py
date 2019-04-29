@@ -11,9 +11,14 @@ class Game:
 
     empty_tile = 0
 
-    def __init__(self, size=4, probability_of_4=0.1, state=None):
+    def __init__(self, size=4, probability_of_4=0.1, state=None,
+                 scoring="2048"):
         self.size = size
         self.score = 0
+        if scoring == "threes":
+            self.update_score = self.score_threes
+        else:
+            self.update_score = self.score_2048
         self.p4 = probability_of_4
 
         self.prev_state = None
@@ -78,9 +83,9 @@ class Game:
         else:
             return True
 
-    def set_state(self, state):
+    def set_state(self, state, score=0):
         self.prev_state = None
-        self.score = 0
+        self.score = score
         self.state = state[:]
 
     def change_state(self, action):
@@ -111,8 +116,9 @@ class Game:
                     stop_index = indices[stop_i]
                     self.state[stop_index] = tile
 
-    def update_score(self):
-        # TODO describe what the score is and how it is calculated
+    def score_2048(self):
+        # the score increases every time the two tiles are combined by the value
+        # of the new tile
         min_tile = increment(self.empty_tile)
         prev_tiles = [tile for tile in self.prev_state if tile > min_tile]
         prev_tiles.sort()
@@ -131,6 +137,19 @@ class Game:
                     prev_tiles.pop()
         self.score += delta
 
+    def score_threes(self):
+        # each nonempty tile has a rank n:
+        #   tile value = 2^n
+        # score of a state is the sum of the scores of tiles present on the
+        # board:
+        #   tile score = 3^(n - 1) - 1
+        score = 0
+        for tile in self.state:
+            if tile == self.empty_tile:
+                continue
+            score += pow(3, tile - 1) - 1
+        self.score = score
+
     def generate_tile(self):
         # insert tile at random empty position
         # probabilities of the values of the new tile: {2: (1 - p), 4: p}
@@ -142,6 +161,12 @@ class Game:
         if empty_indices:
             self.state[random.choice(empty_indices)] = tile
 
+    def accept(self, action):
+        self.change_state(action)
+        self.update_score()
+        self.generate_tile()
+        return self.state[:]
+
 
 def init_randomness(rseed=42):
     random.seed(rseed)
@@ -151,8 +176,4 @@ def increment(tile):
     return tile + 1
 
 
-def interact(game, action):
-    game.change_state(action)
-    game.update_score()
-    game.generate_tile()
-    return game.state[:]
+

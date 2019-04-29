@@ -1,5 +1,5 @@
 import pytest
-from game import Game, init_randomness, interact
+from game import Game, init_randomness
 
 
 def rotate(state, size, num_rotations=1):
@@ -185,7 +185,7 @@ def test_generate_tile(game_instance):
     assert game_instance.get_state() == state
 
 
-update_score_state_examples = [
+update_score_2048_state_examples = [
     # (state, score)
 
     # tiles do not move, score does not change
@@ -232,8 +232,42 @@ update_score_state_examples = [
 ]
 
 
-@pytest.mark.parametrize("state, score", update_score_state_examples)
-def test_score(game_instance, state, score):
+@pytest.mark.parametrize("state, score", update_score_2048_state_examples)
+def test_score_2048(game_instance, state, score):
     game_instance.set_state(state)
-    interact(game_instance, game_instance.ActionSpace.RIGHT)
+    game_instance.accept(game_instance.ActionSpace.RIGHT)
     assert game_instance.get_value() == score
+
+
+update_score_threes_state_examples = [
+    # (state, score)
+
+    # state with only minimal tiles
+    # 0 1 0 0
+    # 0 0 0 0
+    # 0 0 1 0
+    # 0 0 0 0
+    ([0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0], 0),
+
+    # non terminal state
+    # 0 1 2 0
+    # 0 4 0 0
+    # 5 2 1 0
+    # 6 0 3 0
+    ([0, 1, 2, 0, 0, 4, 0, 0, 5, 2, 1, 0, 6, 0, 3, 0], 2 + 26 + 80 + 2 + 242 + 8),
+
+    # terminal state
+    # 3 1 2 3
+    # 1 2 8 4
+    # 5 3 1 6
+    # 1 2 3 5
+    ([3, 1, 2, 3, 1, 2, 8, 4, 5, 3, 1, 6, 1, 2, 3, 5], 8 + 2 + 8 + 2 + 2186 + 26 + 80 + 8 + 242 + 2 + 8 + 80),
+]
+
+
+@pytest.mark.parametrize("state, score", update_score_threes_state_examples)
+def test_score_threes(state, score):
+    game_instance = Game(state=state, scoring="threes")
+    game_instance.update_score()
+    assert game_instance.get_value() == score
+
