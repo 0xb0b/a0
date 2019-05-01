@@ -11,8 +11,9 @@ from matplotlib import pyplot as plt
 # "%matplotlib notebook" magic in the notebook before plotting the figure
 
 
-# visualize the game state (2048 board with numbered tiles) in jupyter notebook
 class Display:
+    # visualize the game state (2048 board with numbered tiles) in jupyter
+    # notebook
 
     def __init__(self, state_size=(4, 4), display_size=(8, 8),
                  colormap="magma_r", background_color="grey",
@@ -21,22 +22,24 @@ class Display:
         self.cmap = copy(plt.cm.get_cmap(colormap))
         self.cmap.set_bad(background_color)
 
-        self.fig, ax = plt.subplots(figsize=display_size)
+        self.fig, axes = plt.subplots(figsize=display_size)
 
         # remove frame and ticks
-        ax.set_frame_on(False)
-        ax.tick_params(axis="both", which="both",
-                       bottom=False, top=False, left=False, right=False,
-                       labelbottom=False, labeltop=False,
-                       labelleft=False, labelright=False)
+        axes.set_frame_on(False)
+        axes.tick_params(axis="both", which="both",
+                         bottom=False, top=False, left=False, right=False,
+                         labelbottom=False, labeltop=False,
+                         labelleft=False, labelright=False)
 
         # set up the grid
-        ax.set_xticks(np.arange(state_size[1]+1)-.5, minor=True)
-        ax.set_yticks(np.arange(state_size[0]+1)-.5, minor=True)
-        ax.grid(which="minor", color=background_color, linestyle='-',
-                linewidth=8)
+        # first axis in matrix (vertical) is y axis on the plot and second axis
+        # in matrix is x axis on the plot
+        axes.set_xticks(np.arange(state_size[1]+1)-.5, minor=True)
+        axes.set_yticks(np.arange(state_size[0]+1)-.5, minor=True)
+        axes.grid(which="minor", color=background_color, linestyle='-',
+                  linewidth=8)
 
-        self.ax = ax
+        self.axes = axes
 
         # text color change threshold (to show light text on dark background
         # and vice versa)
@@ -53,8 +56,8 @@ class Display:
     def draw(self, state):
         # value 0 is masked in state so it is shown in background color on the
         # plot (this is set by the call to colormap method set_bad() in init)
-        self.ax.imshow(np.ma.masked_equal(state, 0), cmap=self.cmap,
-                       vmin=0, vmax=16)
+        self.axes.imshow(np.ma.masked_equal(state, 0), cmap=self.cmap,
+                         vmin=0, vmax=16)
         self.annotate(state)
         self.fig.canvas.draw()
 
@@ -73,8 +76,8 @@ class Display:
                     else:
                         text_color = self.textcolors[state[i, j] >
                                                      self.text_threshold]
-                    text = self.ax.text(j, i, 1 << state[i, j],
-                                        color=text_color, **self.text_kw)
+                    text = self.axes.text(j, i, 1 << state[i, j],
+                                          color=text_color, **self.text_kw)
                     self.texts.append(text)
 
 
@@ -85,4 +88,3 @@ def test():
         state = np.random.randint(17, size=(4, 4), dtype=int)
         display.draw(state)
         time.sleep(2)
-
