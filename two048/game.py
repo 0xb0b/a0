@@ -15,6 +15,7 @@ class Game:
                  scoring="2048"):
         self.size = size
         self.score = 0
+        self.scoring = scoring
         if scoring == "threes":
             self.update_score = self.score_threes
         else:
@@ -27,7 +28,7 @@ class Game:
             # make initial state nonempty so that game state can never be empty
             self.generate_tile()
         else:
-            self.state = state[:]
+            self.state = state
 
         # sequences of indices - rows or columns with indices ordered according
         # to a certain move
@@ -43,6 +44,12 @@ class Game:
         self.index_sequences[self.ActionSpace.LEFT] = tuple(rows)
         self.index_sequences[self.ActionSpace.RIGHT] = tuple(
             [tuple(reversed(row)) for row in rows])
+
+    def clone(self):
+        cloned_game = Game(size=self.size, probability_of_4=self.p4,
+                           state=self.state, scoring=self.scoring)
+        cloned_game.set_value(self.score)
+        return cloned_game
 
     def actions(self):
         return iter(self.ActionSpace)
@@ -83,10 +90,12 @@ class Game:
         else:
             return True
 
-    def set_state(self, state, score=0):
+    def set_state(self, state):
         self.prev_state = None
-        self.score = score
-        self.state = state[:]
+        self.state = state
+
+    def set_value(self, value=0):
+        self.score = value
 
     def change_state(self, action):
         # change the state by applying the action:
@@ -131,7 +140,7 @@ class Game:
             else:
                 # this tile is from merging two lower level tiles
                 # in previous state
-                delta += tile
+                delta += 1 << tile
                 if prev_tiles:
                     prev_tiles.pop()
                     prev_tiles.pop()

@@ -3,17 +3,15 @@ from game import Game, init_randomness
 
 
 def rotate(state, size, num_rotations=1):
-    # rotate input state counter clockwise given number of times and return as
-    # a new state
-    result_state = state[:]
+    # rotate the input state counter clockwise given number of times and return
+    # the rotated state
     if num_rotations == 0:
-        return result_state
-    temp_state = state[:]
+        return state
     for _ in range(num_rotations):
+        temp_state = state[:]
         for i, tile in enumerate(temp_state):
-            result_state[size * (size - 1 - i % size) + i // size] = tile
-        temp_state = result_state[:]
-    return result_state
+            state[size * (size - 1 - i % size) + i // size] = tile
+    return state
 
 
 @pytest.mark.parametrize("input_state, rotated_state, size", [
@@ -94,11 +92,11 @@ def test_change_state(game_instance, initial_state, final_state):
     # ActionSpace is expected to be ordered counter clockwise starting from
     # ActionSpace.RIGHT
     for action in game_instance.actions():
-        game_instance.set_state(initial_state)
+        game_instance.set_state(initial_state[:])
         game_instance.change_state(action)
         assert game_instance.get_state() == final_state
-        initial_state = rotate(initial_state, game_instance.size)
-        final_state = rotate(final_state, game_instance.size)
+        rotate(initial_state, game_instance.size)
+        rotate(final_state, game_instance.size)
 
 
 possible_actions_state_examples = [
@@ -214,27 +212,28 @@ update_score_2048_state_examples = [
     # 0 1 0 1 --> 0 0 0 2
     # 0 0 0 0     0 0 0 0
     # 0 0 0 0     0 0 0 0
-    ([0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0], 2),
+    ([0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0], 4),
 
     # tiles moved and merged
     # 0 1 2 2     0 0 1 3
     # 0 4 0 4 --> 0 0 0 5
     # 2 2 1 0     0 0 3 1
     # 3 0 3 7     0 0 4 7
-    ([0, 1, 2, 2, 0, 4, 0, 4, 2, 2, 1, 0, 3, 0, 3, 7], 5 + 4 + 3 + 3),
+    ([0, 1, 2, 2, 0, 4, 0, 4, 2, 2, 1, 0, 3, 0, 3, 7], 32 + 16 + 8 + 8),
 
     # double merges
     # 1 1 2 2     0 0 2 3
     # 0 5 4 4 --> 0 0 5 5
     # 2 0 2 3     0 0 3 3
     # 3 3 3 3     0 0 4 4
-    ([1, 1, 2, 2, 0, 5, 4, 4, 2, 0, 2, 3, 3, 3, 3, 3], 5 + 4 + 4 + 3 + 3 + 2),
+    ([1, 1, 2, 2, 0, 5, 4, 4, 2, 0, 2, 3, 3, 3, 3, 3], 32 + 16 + 16 + 8 + 8 + 4),
 ]
 
 
 @pytest.mark.parametrize("state, score", update_score_2048_state_examples)
 def test_score_2048(game_instance, state, score):
     game_instance.set_state(state)
+    game_instance.set_value()
     game_instance.accept(game_instance.ActionSpace.RIGHT)
     assert game_instance.get_value() == score
 
