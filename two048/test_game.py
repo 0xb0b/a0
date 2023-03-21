@@ -14,16 +14,12 @@ def rotate(state, size, num_rotations=1):
     return state
 
 
-@pytest.mark.parametrize("input_state, rotated_state, size", [
-                          ([3],
-                           [3], 1),
-                          ([1, 2, 3, 4],
-                           [2, 4, 1, 3], 2),
-                          ([1, 2, 3, 4, 5, 6, 7, 8, 9],
-                           [3, 6, 9, 2, 5, 8, 1, 4, 7], 3),
-                          ([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5],
-                           [3, 7, 1, 5, 2, 6, 0, 4, 1, 5, 9, 3, 0, 4, 8, 2], 4)
-                          ])
+@pytest.mark.parametrize("input_state, rotated_state, size",
+    [([3], [3], 1),
+     ([1, 2, 3, 4], [2, 4, 1, 3], 2),
+     ([1, 2, 3, 4, 5, 6, 7, 8, 9], [3, 6, 9, 2, 5, 8, 1, 4, 7], 3),
+     ([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5],
+         [3, 7, 1, 5, 2, 6, 0, 4, 1, 5, 9, 3, 0, 4, 8, 2], 4)])
 def test_rotate(input_state, rotated_state, size):
     assert rotate(input_state, size) == rotated_state
 
